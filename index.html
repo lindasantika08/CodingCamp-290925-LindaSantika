@@ -9,30 +9,62 @@
 <body>
     <div class="container">
         <header>
-            <h1>📝 My To-Do List</h1>
-            <p class="subtitle">Stay organized and productive</p>
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>📝 My To-Do List</h1>
+                    <p class="subtitle">Stay organized and productive</p>
+                </div>
+                <div class="theme-switcher">
+                    <button class="theme-btn" data-theme="purple" title="Purple Theme">
+                        <span class="theme-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></span>
+                    </button>
+                    <button class="theme-btn" data-theme="blue" title="Blue Theme">
+                        <span class="theme-color" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></span>
+                    </button>
+                    <button class="theme-btn" data-theme="green" title="Green Theme">
+                        <span class="theme-color" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></span>
+                    </button>
+                    <button class="theme-btn" data-theme="orange" title="Orange Theme">
+                        <span class="theme-color" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></span>
+                    </button>
+                    <button class="theme-btn" data-theme="dark" title="Dark Theme">
+                        <span class="theme-color" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);"></span>
+                    </button>
+                </div>
+            </div>
         </header>
 
         <div class="todo-input-section">
             <form id="todoForm">
-                <div class="form-group">
-                    <label for="todoInput">Task Description</label>
-                    <input 
-                        type="text" 
-                        id="todoInput" 
-                        placeholder="Enter your task here..."
-                        autocomplete="off"
-                    >
-                    <span class="error-message" id="todoError"></span>
-                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="todoInput">Task Description</label>
+                        <input 
+                            type="text" 
+                            id="todoInput" 
+                            placeholder="Enter your task here..."
+                            autocomplete="off"
+                        >
+                        <span class="error-message" id="todoError"></span>
+                    </div>
 
-                <div class="form-group">
-                    <label for="dateInput">Due Date</label>
-                    <input 
-                        type="date" 
-                        id="dateInput"
-                    >
-                    <span class="error-message" id="dateError"></span>
+                    <div class="form-group">
+                        <label for="dateInput">Due Date</label>
+                        <input 
+                            type="date" 
+                            id="dateInput"
+                        >
+                        <span class="error-message" id="dateError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priorityInput">Priority</label>
+                        <select id="priorityInput" class="priority-select">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-add">
@@ -41,18 +73,58 @@
             </form>
         </div>
 
-        <div class="filter-section">
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">
-                    All Tasks
-                </button>
-                <button class="filter-btn" data-filter="active">
-                    Active
-                </button>
-                <button class="filter-btn" data-filter="completed">
-                    Completed
-                </button>
+        <div class="controls-section">
+            <div class="filter-section">
+                <label class="control-label">Filter by Status:</label>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">
+                        All Tasks
+                    </button>
+                    <button class="filter-btn" data-filter="active">
+                        Active
+                    </button>
+                    <button class="filter-btn" data-filter="completed">
+                        Completed
+                    </button>
+                </div>
             </div>
+
+            <div class="filter-section">
+                <label class="control-label">Filter by Priority:</label>
+                <div class="filter-buttons">
+                    <button class="priority-filter-btn active" data-priority="all">
+                        All
+                    </button>
+                    <button class="priority-filter-btn" data-priority="high">
+                        🔴 High
+                    </button>
+                    <button class="priority-filter-btn" data-priority="medium">
+                        🟡 Medium
+                    </button>
+                    <button class="priority-filter-btn" data-priority="low">
+                        🟢 Low
+                    </button>
+                </div>
+            </div>
+
+            <div class="sort-section">
+                <label class="control-label">Sort by:</label>
+                <div class="sort-buttons">
+                    <button class="sort-btn active" data-sort="date-asc">
+                        📅 Date (Oldest)
+                    </button>
+                    <button class="sort-btn" data-sort="date-desc">
+                        📅 Date (Newest)
+                    </button>
+                    <button class="sort-btn" data-sort="priority">
+                        ⭐ Priority
+                    </button>
+                    <button class="sort-btn" data-sort="name">
+                        🔤 Name (A-Z)
+                    </button>
+                </div>
+            </div>
+
             <div class="task-count">
                 <span id="taskCount">0 tasks</span>
             </div>
@@ -63,7 +135,7 @@
             </ul>
             <div class="empty-state" id="emptyState">
                 <div class="empty-icon">📋</div>
-                <p>No tasks yet. Add one above to get started!</p>
+                <p>No tasks found. Try adjusting your filters or add a new task!</p>
             </div>
         </div>
     </div>

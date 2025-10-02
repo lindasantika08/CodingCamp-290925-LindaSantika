@@ -1,18 +1,26 @@
 const todoForm = document.getElementById('todoForm');
 const todoInput = document.getElementById('todoInput');
 const dateInput = document.getElementById('dateInput');
+const priorityInput = document.getElementById('priorityInput');
 const todoError = document.getElementById('todoError');
 const dateError = document.getElementById('dateError');
 const todoList = document.getElementById('todoList');
 const emptyState = document.getElementById('emptyState');
 const filterButtons = document.querySelectorAll('.filter-btn');
+const priorityFilterButtons = document.querySelectorAll('.priority-filter-btn');
+const sortButtons = document.querySelectorAll('.sort-btn');
+const themeButtons = document.querySelectorAll('.theme-btn');
 const taskCount = document.getElementById('taskCount');
 
 let todos = [];
 let currentFilter = 'all';
+let currentPriorityFilter = 'all';
+let currentSort = 'date-asc';
+let currentTheme = 'purple';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadTodos();
+    loadTheme();
     setMinDate();
     renderTodos();
 });
@@ -31,6 +39,31 @@ function loadTodos() {
 
 function saveTodos() {
     localStorage.setItem('todos', JSON.stringify(todos));
+}
+
+function loadTheme() {
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) {
+        currentTheme = storedTheme;
+        applyTheme(currentTheme);
+    }
+    updateActiveThemeButton();
+}
+
+function applyTheme(theme) {
+    document.body.className = `theme-${theme}`;
+    currentTheme = theme;
+    localStorage.setItem('theme', theme);
+}
+
+function updateActiveThemeButton() {
+    themeButtons.forEach(btn => {
+        if (btn.dataset.theme === currentTheme) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 }
 
 function validateForm() {
@@ -65,12 +98,14 @@ function validateForm() {
     return isValid;
 }
 
-function addTodo(text, date) {
+function addTodo(text, date, priority) {
     const todo = {
         id: Date.now(),
         text: text,
         date: date,
-        completed: false
+        priority: priority,
+        completed: false,
+        createdAt: new Date().toISOString()
     };
     
     todos.push(todo);
@@ -99,36 +134,93 @@ function formatDate(dateString) {
     return date.toLocaleDateString('en-US', options);
 }
 
-function getFilteredTodos() {
+function filterByStatus(todosList) {
     switch (currentFilter) {
         case 'active':
-            return todos.filter(todo => !todo.completed);
+            return todosList.filter(todo => !todo.completed);
         case 'completed':
-            return todos.filter(todo => todo.completed);
+            return todosList.filter(todo => todo.completed);
         default:
-            return todos;
+            return todosList;
     }
 }
 
+function filterByPriority(todosList) {
+    if (currentPriorityFilter === 'all') {
+        return todosList;
+    }
+    return todosList.filter(todo => (todo.priority || 'medium') === currentPriorityFilter);
+}
+
+function sortTodos(todosList) {
+    const sorted = [...todosList];
+    
+    switch (currentSort) {
+        case 'date-asc':
+            return sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
+        case 'date-desc':
+            return sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+        case 'priority':
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            return sorted.sort((a, b) => {
+                const aPriority = a.priority || 'medium';
+                const bPriority = b.priority || 'medium';
+                return priorityOrder[aPriority] - priorityOrder[bPriority];
+            });
+        case 'name':
+            return sorted.sort((a, b) => a.text.toLowerCase().localeCompare(b.text.toLowerCase()));
+        default:
+            return sorted;
+    }
+}
+
+function getProcessedTodos() {
+    let processed = [...todos];
+    processed = filterByStatus(processed);
+    processed = filterByPriority(processed);
+    processed = sortTodos(processed);
+    return processed;
+}
+
 function updateTaskCount() {
-    const filteredTodos = getFilteredTodos();
-    const count = filteredTodos.length;
-    taskCount.textContent = `${count} ${count === 1 ? 'task' : 'tasks'}`;
+    const processedTodos = getProcessedTodos();
+    const count = processedTodos.length;
+    const totalActive = todos.filter(t => !t.completed).length;
+    const totalCompleted = todos.filter(t => t.completed).length;
+    
+    taskCount.innerHTML = `
+        <strong>${count}</strong> ${count === 1 ? 'task' : 'tasks'} shown | 
+        <span style="color: #3498db;">${totalActive} active</span> | 
+        <span style="color: #27ae60;">${totalCompleted} completed</span>
+    `;
+}
+
+function getPriorityEmoji(priority) {
+    switch (priority) {
+        case 'high': return '🔴';
+        case 'medium': return '🟡';
+        case 'low': return '🟢';
+        default: return '';
+    }
 }
 
 function renderTodos() {
-    const filteredTodos = getFilteredTodos();
+    const processedTodos = getProcessedTodos();
     
     todoList.innerHTML = '';
     
-    if (filteredTodos.length === 0) {
+    if (processedTodos.length === 0) {
         emptyState.classList.remove('hidden');
         todoList.classList.add('hidden');
     } else {
         emptyState.classList.add('hidden');
         todoList.classList.remove('hidden');
         
-        filteredTodos.forEach(todo => {
+        processedTodos.forEach(todo => {
+            if (!todo.priority) {
+                todo.priority = 'medium';
+            }
+            
             const li = document.createElement('li');
             li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
             
@@ -139,6 +231,9 @@ function renderTodos() {
                     ${todo.completed ? 'checked' : ''}
                     data-id="${todo.id}"
                 >
+                <span class="priority-badge ${todo.priority}">
+                    ${getPriorityEmoji(todo.priority)} ${todo.priority.toUpperCase()}
+                </span>
                 <div class="todo-content">
                     <div class="todo-text">${escapeHtml(todo.text)}</div>
                     <div class="todo-date">
@@ -147,7 +242,7 @@ function renderTodos() {
                     </div>
                 </div>
                 <button class="btn-delete" data-id="${todo.id}">
-                    Delete
+                     Delete
                 </button>
             `;
             
@@ -164,7 +259,9 @@ function renderTodos() {
         document.querySelectorAll('.btn-delete').forEach(button => {
             button.addEventListener('click', (e) => {
                 const id = parseInt(e.target.dataset.id);
-                deleteTodo(id);
+                if (confirm('Are you sure you want to delete this task?')) {
+                    deleteTodo(id);
+                }
             });
         });
     }
@@ -184,11 +281,13 @@ todoForm.addEventListener('submit', (e) => {
     if (validateForm()) {
         const todoText = todoInput.value.trim();
         const todoDate = dateInput.value;
+        const todoPriority = priorityInput.value;
         
-        addTodo(todoText, todoDate);
+        addTodo(todoText, todoDate, todoPriority);
         
         todoInput.value = '';
         dateInput.value = '';
+        priorityInput.value = 'medium';
         
         todoError.textContent = '';
         dateError.textContent = '';
@@ -198,11 +297,33 @@ todoForm.addEventListener('submit', (e) => {
 filterButtons.forEach(button => {
     button.addEventListener('click', () => {
         filterButtons.forEach(btn => btn.classList.remove('active'));
-        
         button.classList.add('active');
-        
         currentFilter = button.dataset.filter;
-        
         renderTodos();
+    });
+});
+
+priorityFilterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        priorityFilterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        currentPriorityFilter = button.dataset.priority;
+        renderTodos();
+    });
+});
+
+sortButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        sortButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        currentSort = button.dataset.sort;
+        renderTodos();
+    });
+});
+
+themeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        applyTheme(button.dataset.theme);
+        updateActiveThemeButton();
     });
 });
